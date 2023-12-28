@@ -1,15 +1,10 @@
 from course_structure import *
-import discord
+from commands import bot
 from discord import ButtonStyle
-from discord.ext import commands
 from discord.ui import View, Button, Select
 
 
-token = 'MTE4NzAyNTU5MjIxNDg4MDMyNw.G4a-I_.2302WyvokUhUs3rU5toG7OJhGJPaMV1S3AA5kI'
 prefix = '!'
-
-intents = discord.Intents.default().all()
-bot = commands.Bot(command_prefix=prefix, intents=intents)
 
 choice = ''
 modul = ''
@@ -132,6 +127,3 @@ async def on_message(message):
             else:
                 await message.channel.send('Общайтесь с ботом с помощью кнопок и команд')
     await bot.process_commands(message)
-
-
-bot.run(token)
