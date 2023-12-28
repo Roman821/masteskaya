@@ -4,7 +4,7 @@ from course_structure import *
 from discord import ButtonStyle
 from discord.ui import View, Button, Select
 
-token = 'MTE4NzAyNTU5MjIxNDg4MDMyNw.G13G-h.5fKghrmWFcmrBTVI672DFYWWq4I3kATCJ6UEdQ'
+token = ''
 intents = discord.Intents.default().all()
 prefix = '!'
 bot = commands.Bot(command_prefix=prefix, intents=intents)
