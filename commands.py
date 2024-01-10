@@ -4,18 +4,23 @@ from course_structure import *
 from discord import ButtonStyle
 from discord.ui import View, Button, Select
 
+
+class Question:
+    def __init__(self):
+        self.choice = ''
+        self.modul = ''
+        self.topic = ''
+        self.exercise = 0
+        self.project = ''
+        self.programmer = ''
+
+
 token = ''
 intents = discord.Intents.default().all()
 prefix = '!'
 bot = commands.Bot(command_prefix=prefix, intents=intents)
 bot.remove_command('help')
-
-choice = ''
-modul = ''
-topic = ''
-exercise = 0
-project = ''
-programmer = ''
+question = Question()
 
 
 def view_generation(dic):
@@ -31,12 +36,6 @@ def view_generation(dic):
 
 @bot.group(invoke_without_command=True)
 async def help(ctx):
-    # global modul, topic, exercise, project, programmer
-    # modul = ''
-    # topic = ''
-    # exercise = 0
-    # project = ''
-    # programmer = ''
     em = discord.Embed(title='help', description='Напиши !help <название команды>, чтобы узнать подробнее о ней',
                        color=0xff9900)
     em.add_field(name='Список команд', value='start, help, ask')
@@ -61,14 +60,7 @@ async def ask(ctx):
 
 @bot.command()
 async def start(ctx):
-    # global modul, topic, exercise, project, programmer
-    # modul = ''
-    # topic = ''
-    # exercise = 0
-    # project = ''
-    # programmer = ''
     author = ctx.message.author  # Объявляем переменную author и записываем туда информацию об авторе.
-
     await ctx.send(f'Привет, {author.mention}!\n'
                    f'Это бот-помощник по курсу, напиши !help, чтобы ознакомиться с командами')
 
@@ -78,24 +70,21 @@ async def ask(ctx):
     async def practicum_fun(interaction):
         async def topic_choose(interaction):
             async def exercise_choose(interaction):
-                global topic
-                topic = select_topics.values[0]
-                if practicum_structure[modul][topic] == 0:
+                question.topic = select_topics.values[0]
+                if practicum_structure[question.modul][question.topic] == 0:
                     await interaction.response.send_message(f'В этой теме пока нет уроков. Пожалуйста, '
                                                             f'выберите другую тему')
                 else:
                     await interaction.response.send_message(f'Введите номер урока (число от 1 до '
-                                                            f'{practicum_structure[modul][topic]})')
-            global modul
-            modul = select_practicum.values[0]
-            view_topics, select_topics = view_generation(practicum_structure[modul])
+                                                            f'{practicum_structure[question.modul][question.topic]})')
+            question.modul = select_practicum.values[0]
+            view_topics, select_topics = view_generation(practicum_structure[question.modul])
             select_topics.callback = exercise_choose
-            await interaction.response.send_message(f'Выберите тему в модуле {modul}:', view=view_topics)
+            await interaction.response.send_message(f'Выберите тему в модуле {question.modul}:', view=view_topics)
 
-        global modul, topic, exercise
-        modul = ''
-        topic = ''
-        exercise = 0
+        question.modul = ''
+        question.topic = ''
+        question.exercise = 0
         view_practicum, select_practicum = view_generation(practicum_structure)
         select_practicum.callback = topic_choose
         await interaction.response.send_message('Выберите модуль:', view=view_practicum)
@@ -103,19 +92,18 @@ async def ask(ctx):
     async def project_fun(interaction):
         async def project_choose(interaction):
             async def choosen(interaction):
-                global modul
-                global project
-                project = select_projects.values[0]
-                global choice
-                choice = f'Проект -> {modul} -> {project}'
-                await interaction.response.send_message(f'Вы задали вопрос: {choice}. Подождите, идёт поиск ответов...')
-                modul = ''
-                project = ''
-            global modul
-            modul = select_modul.values[0]
-            view_projects, select_projects = view_generation(projects_structure[modul])
+                question.project = select_projects.values[0]
+                question.choice = f'Проект -> {question.modul} -> {question.project}'
+                await interaction.response.send_message(f'Вы задали вопрос: {question.choice}. '
+                                                        f'Подождите, идёт поиск ответов...')
+                question.modul = ''
+                question.project = ''
+            question.modul = select_modul.values[0]
+            view_projects, select_projects = view_generation(projects_structure[question.modul])
             select_projects.callback = choosen
             await interaction.response.send_message('Выберите проект:', view=view_projects)
+        question.modul = ''
+        question.project = ''
         view_modul, select_modul = view_generation(projects_structure)
         select_modul.callback = project_choose
         await interaction.response.send_message('Выберите модуль:', view=view_modul)
@@ -123,19 +111,18 @@ async def ask(ctx):
     async def programmer_fun(interaction):
         async def modul_choose(interaction):
             async def variant_choose(interaction):
-                global modul
-                global programmer
-                programmer = select_programmer.values[0]
-                global choice
-                choice = f'Самоходный программист -> {modul} -> {programmer}'
-                await interaction.response.send_message(f'Вы задали вопрос: {choice}. Подождите, идёт поиск ответов...')
-                modul = ''
-                programmer = ''
-            global modul
-            modul = select_modul.values[0]
+                question.programmer = select_programmer.values[0]
+                question.choice = f'Самоходный программист -> {question.modul} -> {question.programmer}'
+                await interaction.response.send_message(f'Вы задали вопрос: {question.choice}. '
+                                                        f'Подождите, идёт поиск ответов...')
+                question.modul = ''
+                question.programmer = ''
+            question.modul = select_modul.values[0]
             view_programmer, select_programmer = view_generation(programmer_list)
             select_programmer.callback = variant_choose
             await interaction.response.send_message('Выберите проект:', view=view_programmer)
+        question.modul = ''
+        question.programmer = ''
         view_modul, select_modul = view_generation(projects_structure)
         select_modul.callback = modul_choose
         await interaction.response.send_message('Выберите модуль:', view=view_modul)
@@ -155,25 +142,24 @@ async def ask(ctx):
 
 @bot.event
 async def on_message(message):
-    global choice
     if not message.author.bot and not message.content.startswith(prefix):
-        global modul
-        global topic
-        if message.content.isdigit() and 0 < int(message.content) <= practicum_structure[modul][topic]:
-            global exercise
-            exercise = int(message.content)
-            choice = f'Тренажёр на платформе Практикума -> {modul} -> {topic} -> {exercise} урок'
-            await message.channel.send(f'Вы задали вопрос: {choice}. Подождите, идёт поиск ответов...')
-            modul = ''
-            topic = ''
-            exercise = 0
+        if message.content.isdigit() and 0 < int(message.content) <= practicum_structure[question.modul][question.topic]:
+            question.exercise = int(message.content)
+            question.choice = f'Тренажёр на платформе Практикума -> {question.modul} -> {question.topic} -> ' \
+                              f'{question.exercise} урок'
+            await message.channel.send(f'Вы задали вопрос: {question.choice}. Подождите, идёт поиск ответов...')
+            question.modul = ''
+            question.topic = ''
+            question.exercise = 0
         elif message.content.isdigit():
             await message.channel.send(f'Урока с номером {message.content} нет в этой теме. Может Вы ошиблись?')
         else:
-            if modul and topic:
+            if question.modul and question.topic:
                 await message.channel.send('Пожалуйста, введите номер урока числом')
             else:
                 await message.channel.send('Общайтесь с ботом с помощью кнопок и команд')
+    elif not message.author.bot and message.content not in ['!start', '!help', '!ask']:
+        await message.channel.send(f'Тут нет команды {message.content[1:]}')
     await bot.process_commands(message)
 
 # @help.command()
