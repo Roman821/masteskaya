@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord import ButtonStyle
 from discord.ui import View, Button, Select
 from database import Database
-from course_structure import *
+from course_structure import * # TODO вот так лучше не импортировать, ты сразу же теряешься че ты там импортируешь и тд
 
 
 class Question:
@@ -17,30 +17,31 @@ class Question:
         self.exercise = 0
         self.project = ''
         self.programmer = ''
-
+#TODO Вот это тоже надо бы вытащить в отдельный файл
 
 load_dotenv()
 
-token = os.getenv('DISCORD_TOKEN')
+token = os.getenv('DISCORD_TOKEN') # TODO Вообще стоило все переменные, которые зависят от окружения
+# вынести в отдельный файл. Тот же префикс, токен, путь до базы, айдишники админов, айдишник канала
 intents = discord.Intents.default().all()
 prefix = '!'
 bot = commands.Bot(command_prefix=prefix, intents=intents)
 bot.remove_command('help')
-question = Question()
+question = Question() # TODO и у нас получается один вопрос на всех пользователей?
 database = Database('bot_database.db')  # Создаем экземпляр класса Database
 
 
-def view_generation(dic):
+def view_generation(dic): #TODO WALTER.... Я вообще не понял че за dic
     select = Select(placeholder='Выберите...')
     for n, i in enumerate(dic, start=1):
         select.add_option(label=f'{n}. {i}', value=i)
     view = View()
     view.add_item(select)
-    return view, select
+    return view, select # TODO А сам селект зачем еще возвращать?
 
 
 async def background_task(coro, *args, **kwargs):
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop() # TODO Вау, пока не нашел зачем вам собственный луп, но круто
     return await loop.create_task(coro(*args, **kwargs))
 
 
@@ -75,10 +76,11 @@ async def start(ctx):
 
 @bot.command()
 async def ask(ctx):
-    async def practicum_fun(interaction):
+    async def practicum_fun(interaction): # TODO Так и не вынесли это в отдельный файл/место, читается ну прям жесть тяжело
         async def topic_choose(interaction):
             async def exercise_choose(interaction):
                 question.topic = select_topics.values[0]
+                #TODO две квардратные скобки подряд тоже лучше не допускать, practicum_structure кстати сломался
                 if practicum_structure[question.module][question.topic] == 0:
                     await interaction.response.send_message(
                         f'В этой теме пока нет уроков. Пожалуйста, выберите другую тему')
@@ -98,7 +100,7 @@ async def ask(ctx):
             view_practicum, select_practicum = view_generation(practicum_structure)
             select_practicum.callback = topic_choose
             await interaction.response.send_message('Выберите модуль:', view=view_practicum)
-        except Exception as e:
+        except Exception as e: # TODO Лучше не жрать так все ошибки, напоминаю!
             print(f'An error occurred in practicum_fun: {e}')
 
     async def project_fun(interaction):
@@ -124,7 +126,7 @@ async def ask(ctx):
             await interaction.response.send_message('Выберите модуль:', view=view_modul)
         except Exception as e:
             print(f'An error occurred in project_fun: {e}')
-
+    #TODO Все вот эти функции в итоге вообще один в один по логике, стоило сделать ее одну
     async def programmer_fun(interaction):
         async def modul_choose(interaction):
             async def variant_choose(interaction):
@@ -155,7 +157,7 @@ async def ask(ctx):
     button_practicum.callback = practicum_fun
     button_project.callback = project_fun
     button_programmer.callback = programmer_fun
-
+    # TODO У вас же есть функция которая уже генерирует вью, 34я строка
     view = View()
     view.add_item(button_practicum)
     view.add_item(button_project)
@@ -196,7 +198,7 @@ async def question(ctx):
 async def on_message(message):
     if message.author.bot:
         return
-    await bot.process_commands(message)
+    await bot.process_commands(message) # TODO Лучше было вынести это в отдельную команду, чтобы сервера лишний раз не дергать
 
 
 @bot.event
@@ -217,7 +219,7 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_interaction(interaction):
-    if interaction.type == discord.InteractionType.component:
+    if interaction.type == discord.InteractionType.component: # TODO Видимо какая-то заглушка, стоило тогда ее удалить/не нести в мастер
         # Код для обработки взаимодействий с компонентами
         if interaction.data['component_type'] == discord.ComponentType.button:
             # Обработка кнопок
@@ -228,7 +230,7 @@ async def on_interaction(interaction):
 
 
 @bot.command()
-async def asck(ctx):
+async def asck(ctx): # TODO команда так и называется asck?
     if not question.choice:
         await ctx.send('Для начала воспользуйтесь командой `!ask`')
     else:
@@ -238,7 +240,7 @@ async def asck(ctx):
         if answer:
             await ctx.send(f'Вот ответ на ваш вопрос: {answer}')
         else:
-            # Отправка вопроса на канал для наставника
+            # Отправка вопроса на канал для наставника TODO Стоило вынести айдишник в константу сверху, я мог ее вполне тут и не найти
             mentor_channel_id = 1195277379212423239  # Замените на ID вашего канала для наставника
             mentor_channel = ctx.guild.get_channel(mentor_channel_id)
             if mentor_channel:
@@ -252,7 +254,7 @@ async def asck(ctx):
 @bot.command()
 async def add_answer(ctx, module, topic, exercise, project, programmer, response):
     # Проверка, является ли автор сообщения администратором
-    if ctx.message.author.id not in [1124225406522888244]:
+    if ctx.message.author.id not in [1124225406522888244]: #TODO Аналогично с айдишниками юзеров
         await ctx.send("У вас нет прав для выполнения этой команды.")
         return
 
@@ -268,3 +270,7 @@ async def on_disconnect():
 
 
 bot.run(token)
+# TODO Оверол, очень не хватает модульности, очень сильно хромает читаемость из-за этого. По факту вышел
+# огроменный файл на ~300 строк, который стоило разнести точно файлов на 5.
+# И обратите огромное внимание на вложенные функции друг в друга, это ну просто очень сложно читать!
+# Если нужны какие-то объяснения,, не стесняйтесь писать, задавать вопросы, разберемся во всем обязательно
